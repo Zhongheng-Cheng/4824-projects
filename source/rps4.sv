@@ -15,7 +15,7 @@ module rps2 (
         if (en) begin
             gnt = req;
             if (req == 2'b11) 
-                (sel == 1) ? gnt = 2'b10 : gnt = 2'b01;
+                gnt = (sel == 1) ? 2'b10 : 2'b01;
         end
     end
 
