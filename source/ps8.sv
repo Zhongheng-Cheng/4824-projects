@@ -8,8 +8,8 @@ module ps2 (
 
     // P1 TODO: create a two-bit priority selector using if/else or assign statements
 
-    assign gnt[3] = en & req[1];
-    assign gnt[2] = en & req[0] & ~req[1];
+    assign gnt[1] = en & req[1];
+    assign gnt[0] = en & req[0] & ~req[1];
 
 endmodule
 
