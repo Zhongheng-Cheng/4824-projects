@@ -7,7 +7,7 @@ module ps2 (
 );
 
     // P1 TODO: create a two-bit priority selector using if/else or assign statements
-
+    assign req_up = |req;
     assign gnt[1] = en & req[1];
     assign gnt[0] = en & req[0] & ~req[1];
 
@@ -27,6 +27,25 @@ module ps4 (
     // you can create new variables and index into them
     // ex:
     // ps2 my_ps2(.req(), .en(), .gnt(), .req_up());
+
+    logic req_high;
+    logic req_low;
+
+    ps2 high(
+        .req(req[3:2]), 
+        .en(en), 
+        .gnt(gnt[3:2]),
+        .req_up(req_high)
+    );
+
+    ps2 low(
+        .req(req[1:0]), 
+        .en(en & ~req_high), 
+        .gnt(gnt[1:0]),
+        .req_up(req_up_tmp[0])
+    );
+
+    assign req_up = req_high | req_low;
 
 
 endmodule
