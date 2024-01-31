@@ -67,7 +67,7 @@ SHELL := $(SHELL) -o pipefail
 # options for SOURCES:   ps4-assign.sv, ps4-if_else.sv | ps8.sv     | rps4.sv
 # options for TESTBENCH: ps4_test.sv                   | ps8_test.sv| rps4_test.sv
 TESTBENCH   = ps4_test.sv
-SOURCES     = ps4-assign.sv
+SOURCES     = ps4-if_else.sv
 SYNTH_FILES = and4.vg # P1 NOTE: synthesis is not tested in project 1
 
 # the .vg rule is automatically generated below when the name of the file matches its top level module
