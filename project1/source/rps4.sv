@@ -12,8 +12,10 @@ module rps2 (
 
     always_comb begin
         gnt = 2'b00;
+        req_up = 2'b00;
         if (en) begin
             gnt = req;
+            req_up = |req;
             if (req == 2'b11) 
                 gnt = (sel == 1) ? 2'b10 : 2'b01;
         end

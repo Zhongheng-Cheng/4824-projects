@@ -6,6 +6,7 @@ module testbench;
     logic       sel;
     logic [1:0] gnt;
     logic [1:0] tb_gnt;
+    logic       req_up;
     logic       correct;
 
     // dut stands for Device Under Test, the module we're testing
@@ -13,7 +14,8 @@ module testbench;
         .req (req),
         .en  (en),
         .sel (sel),
-        .gnt (gnt)
+        .gnt (gnt),
+        .req_up (req_up)
     );
 
     always_comb begin
@@ -55,7 +57,7 @@ module testbench;
     end
 
     initial begin
-        $monitor("Time:%4.0f req:%b en:%b sel:%b gnt:%b", $time, req, en, sel, gnt);
+        $monitor("Time:%4.0f req:%b en:%b sel:%b gnt:%b req_up:%b", $time, req, en, sel, gnt, req_up);
 
         req = 2'b00;
         en = 1;
