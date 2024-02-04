@@ -66,7 +66,7 @@ SHELL := $(SHELL) -o pipefail
 # P1 TODO: change TESTBENCH and SOURCES to match your current modules
 # options for SOURCES:   ps4-assign.sv, ps4-if_else.sv | ps8.sv     | rps4.sv
 # options for TESTBENCH: ps4_test.sv                   | ps8_test.sv| rps4_test.sv
-TESTBENCH   = rps2_test.sv
+TESTBENCH   = rps4_test.sv
 SOURCES     = rps4.sv
 SYNTH_FILES = and4.vg # P1 NOTE: synthesis is not tested in project 1
 

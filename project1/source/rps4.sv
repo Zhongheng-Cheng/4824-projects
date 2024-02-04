@@ -39,6 +39,11 @@ module rps4 (
 
     // P1 TODO: add the sequential counter here
 	always_ff @(posedge clock) begin
+        if (reset) count <= 2'b00;
+        else begin
+            if (count == 2'b11) count <= 2'b00;
+            else count <= count + 1'b1;
+        end
 	end
 
 endmodule
