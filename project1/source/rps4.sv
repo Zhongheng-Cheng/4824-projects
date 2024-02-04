@@ -8,14 +8,11 @@ module rps2 (
     output logic       req_up
 );
 
-    // P1 TODO: create a two-bit rotating priority selector using logic
-
     always_comb begin
-        gnt = 2'b00;
-        req_up = 2'b00;
-        if (en) begin
+        req_up = |req;
+        if (~en) gnt = 2'b00;
+        else begin
             gnt = req;
-            req_up = |req;
             if (req == 2'b11) 
                 gnt = (sel == 1) ? 2'b10 : 2'b01;
         end
@@ -34,9 +31,6 @@ module rps4 (
     output logic [1:0] count
 );
 
-    // P1 TODO: create a 4-bit rotating priority selector using rps2 modules
-
-
     // P1 TODO: add the sequential counter here
 	always_ff @(posedge clock) begin
         if (reset) count <= 2'b00;
@@ -45,5 +39,33 @@ module rps4 (
             else count <= count + 1'b1;
         end
 	end
+
+    logic [1:0] req_up_temp;
+    logic [1:0] gnt_temp;
+    logic req_up;
+
+    rps2 left(
+        .req(req[3:2]), 
+        .en(gnt_temp[1]), 
+        .sel(count[0]),
+        .gnt(gnt[3:2]), 
+        .req_up(req_up_temp[1])
+    );
+
+    rps2 right(
+        .req(req[1:0]), 
+        .en(gnt_temp[0]), 
+        .sel(count[0]),
+        .gnt(gnt[1:0]), 
+        .req_up(req_up_temp[0])
+    );
+
+    rps2 top(
+        .req(req_up_temp[1:0]), 
+        .en(en), 
+        .sel(count[1]),
+        .gnt(gnt_temp[1:0]), 
+        .req_up(req_up)
+    );
 
 endmodule
