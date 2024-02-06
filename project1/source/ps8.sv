@@ -6,7 +6,6 @@ module ps2 (
     output logic       req_up
 );
 
-    // P1 TODO: create a two-bit priority selector using if/else or assign statements
     assign req_up = |req;
     assign gnt[1] = en & req[1];
     assign gnt[0] = en & req[0] & ~req[1];
@@ -20,13 +19,6 @@ module ps4 (
     output logic [3:0] gnt,
     output logic       req_up
 );
-
-    // P1 TODO: create a four-bit priority selector from three ps2 modules
-    // see and4.sv for an example
-    // do not use any glue logic: AND, OR, +, *, etc (indexing by bits is ok)
-    // you can create new variables and index into them
-    // ex:
-    // ps2 my_ps2(.req(), .en(), .gnt(), .req_up());
 
     logic req_high;
     logic req_low;
@@ -51,7 +43,6 @@ module ps4 (
 endmodule
 
 
-// P1 TODO: declare and implement a ps8 module using a combination of ps4 and ps2 modules
 module ps8 (
     input        [7:0] req,
     input              en,
