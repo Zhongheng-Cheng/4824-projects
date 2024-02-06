@@ -31,7 +31,6 @@ module rps4 (
     output logic [1:0] count
 );
 
-    // P1 TODO: add the sequential counter here
 	always_ff @(posedge clock) begin
         if (reset) count <= 2'b00;
         else begin
