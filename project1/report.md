@@ -45,3 +45,19 @@ I selected some of the cases and wrote testcases for ps8. All the cases are pass
 ![ps4-test](screenshots/ps8_test.png)
 
 ## Hierarchical Rotating Priority Selectors
+
+### rps4
+
+To build a rps4, build a rps2 first.
+
+![ps4-test](screenshots/rps4_1.png)
+
+Then use three rps2 modules according to the model shown in the instructions.
+
+![ps4-test](screenshots/rps4_2.png)
+
+### rps4_testing
+
+All tests are passed.
+
+![ps4-test](screenshots/rps4_test.png)
