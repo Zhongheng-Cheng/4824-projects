@@ -1,0 +1,37 @@
+
+1.  Is our multiplier fully-pipelined? Can it accept one input on each
+    cycle and compute the outputs concurrently in separate cycles?
+    Explain in a sentence or two.
+
+
+
+2.  For the 8-stage multiplier, what are the minimum clock period
+    and overall time for a multiplication?
+
+Clock period: x.x ns
+Overall time: x.x ns
+
+3.  For 4-stage?
+
+Clock period: x.x ns
+Overall time: x.x ns
+
+4.  For 2-stage?
+
+Clock period: x.x ns
+Overall time: x.x ns
+
+5.  What patterns in the clock period and overall time do you see as we
+    decrease the number of stages? Why would you expect this pattern?
+
+
+
+6.  What is the minimum clock period for your ISR module (with the 8-stage mult)?
+
+Clock period: x.x ns
+
+7.  How long (in ns) would it take your module to compute the square root of
+    1001 given the cycle time of question 6? Would you expect a performance
+    gain or penalty if you used the 2-stage multiplier?
+
+
