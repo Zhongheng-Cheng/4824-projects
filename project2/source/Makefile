@@ -53,7 +53,7 @@ VCS = SW_VCS=2019.06-SP2-1 vcs -sverilog +vc -Mupdate -line -full64 -kdb -lca -n
 VCS_BAD_WARNINGS = +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN
 
 # a reference library of standard structural cells that we link against when synthesizing
-LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
+LIB = lec25dscc25.v
 
 # the EECS 470 synthesis script
 TCL_SCRIPT = 470synth.tcl
