@@ -34,6 +34,7 @@ urgReport/
 *.svf
 *.mr
 *.pvl
+*svsim*
 
 # verdi
 verdi*
