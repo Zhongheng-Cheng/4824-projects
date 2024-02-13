@@ -3,6 +3,10 @@
     cycle and compute the outputs concurrently in separate cycles?
     Explain in a sentence or two.
 
+Yes, it is fully-pipelined. The multiplier has multiple stages, and once a stage finishes, 
+the following stage starts (gets input `start` from the output `done` of previous stage).
+As a result, at any time there would be only one stage working and other stage idle
+who are ready to serve another multiplication process.
 
 
 2.  For the 8-stage multiplier, what are the minimum clock period
