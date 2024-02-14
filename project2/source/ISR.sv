@@ -8,7 +8,6 @@ module ISR(
     output logic done
 );
 
-    logic [63:0] cal_value;
     logic [4:0] i;
     logic reset_sig;
     logic [31:0] res_tmp;
@@ -27,7 +26,6 @@ module ISR(
     
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
-            cal_value <= value;
             i <= 5'b11111;
             mult_start <= 1'b0;
             reset_sig <= 1'b1;
@@ -57,7 +55,7 @@ module ISR(
             result[31:0] = 32'h0;
         end else begin
             done = mult_done & (!i) & ~mult_clear;
-            result[i] = ((square > cal_value) ? 1'b0 : 1'b1) & mult_done;
+            result[i] = ((square > value) ? 1'b0 : 1'b1) & mult_done;
         end
     end
 
