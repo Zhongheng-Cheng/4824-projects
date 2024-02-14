@@ -3,7 +3,7 @@ module testbench();
 	logic [63:0] val;
 	logic clock, reset, done;
 	logic [31:0] result;
-	logic [31:0] ground_truth;
+	logic [31:0] correct_result;
 
     // P2 NOTE: Constructing a correct result can be difficult for the ISR
     //          it can be easier to just check two things:
@@ -11,7 +11,7 @@ module testbench();
     //          - result isn't too small: (result+1)*(result+1) > value
     // logic check = (result * result <= val) && ((result + 1) * (result + 1) > val);
     // logic correct = ~done || (check);
-	wire correct = (ground_truth===result)|~done|reset;
+	wire correct = (correct_result===result)|~done|reset;
 
     ISR isr(
         .reset(reset), 
@@ -32,15 +32,15 @@ module testbench();
 		clock=~clock;
 	end
 
-	task cal_ground_truth;
+	task cal_correct_result;
         input [63:0] value;
-        output [31:0] ground_truth;
+        output [31:0] correct_result;
         begin
             integer j;
-			ground_truth = 32'h00000000;
+			correct_result = 32'h00000000;
             for (j=31; j >= 0; j--) begin
-				ground_truth[j] = 1'b1;
-				if (ground_truth * ground_truth > value) ground_truth[j] = 1'b0;
+				correct_result[j] = 1'b1;
+				if (correct_result * correct_result > value) correct_result[j] = 1'b0;
             end
         end
     endtask
@@ -59,7 +59,7 @@ module testbench();
         input [63:0] value;
         val = value;
 		reset = 1;
-		cal_ground_truth(val, ground_truth);
+		cal_correct_result(val, correct_result);
         clock = 0;
 		@(negedge clock);
 		reset = 0;
