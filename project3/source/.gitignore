@@ -1,0 +1,8 @@
+csrc/
+output/
+programs/
+simv.daidir/
+simv
+ucli.key
+vc_hdrs.h
+verdi*
