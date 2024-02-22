@@ -126,7 +126,9 @@ module pipeline (
             next_if_valid <= 1;
         end else begin
             // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= mem_wb_reg.valid;
+            // next_if_valid <= mem_wb_reg.valid;
+            next_if_valid <= (id_ex_reg.rd_mem || id_ex_reg.wr_mem) ? 1'b0 : 1'b1;
+            // next_if_valid <= 1;
         end
     end
 
