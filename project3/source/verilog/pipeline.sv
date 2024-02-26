@@ -231,6 +231,8 @@ module pipeline (
                 1'b0  // valid
             };
         end else if (id_ex_enable) begin
+            id_packet.rs1_value <= ... // TODO: add mux1
+            id_packet.rs2_value <= ... // TODO: add mux2
             id_ex_reg <= id_packet;
         end
     end
