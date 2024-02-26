@@ -60,9 +60,27 @@ module pipeline (
     logic data_forwarding_stall;
     assign data_forwarding_stall = 1'b0;
 
-    // TODO: add mux1 and mux2
-    logic rs1_mux_value = ...;
-    logic rs2_mux_value = ...;
+    // TODO: define forwarding flags
+    logic mem_forwarding_flag_rs1;
+    logic mem_forwarding_flag_rs2;
+    logic wb_forwarding_flag_rs1;
+    logic wb_forwarding_flag_rs2;
+
+    // default values for rs1 and rs2
+    logic rs1_mux_value = id_packet.rs1_value;
+    logic rs2_mux_value = id_packet.rs2_value;
+
+    always_comb begin
+        if (... == `RV32_LW) begin // TODO: get the inst in the ex stage?
+            data_forwarding_stall = 1'b1;
+            rs1_mux_value = 
+        end else begin
+            if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result;
+            if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
+            if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+        end
+    end
 
     //////////////////////////////////////////////////
     //                                              //
