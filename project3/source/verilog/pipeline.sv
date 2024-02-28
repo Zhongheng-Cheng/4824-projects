@@ -118,6 +118,7 @@ module pipeline (
     // For project 3, start by setting this to always be 1
 
     logic next_if_valid;
+    logic take_branch;
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -129,7 +130,7 @@ module pipeline (
             // next_if_valid <= mem_wb_reg.valid; // no pipelining
             // next_if_valid <= 1; // full pipelining
             next_if_valid <= (id_ex_reg.rd_mem || id_ex_reg.wr_mem) ? 1'b0 : 1'b1; // preventing structural hazard: no simultaneous memory access between IF and MEM
-            
+            take_branch <= ex_packet.take_branch;
         end
     end
 
@@ -167,7 +168,7 @@ module pipeline (
     assign if_id_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (reset || take_branch) begin
             if_id_reg.inst  <= `NOP;
             if_id_reg.valid <= `FALSE;
             if_id_reg.NPC   <= 0;
@@ -210,7 +211,7 @@ module pipeline (
     assign id_ex_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (reset || take_branch) begin
             id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
                 {`XLEN{1'b0}}, // PC
@@ -263,7 +264,7 @@ module pipeline (
     assign ex_mem_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (reset || take_branch) begin
             ex_mem_inst_dbg <= `NOP; // debug output
             ex_mem_reg      <= 0;    // the defaults can all be zero!
         end else if (ex_mem_enable) begin
