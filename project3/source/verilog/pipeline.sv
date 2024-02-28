@@ -60,11 +60,20 @@ module pipeline (
     logic data_forwarding_stall;
     assign data_forwarding_stall = 1'b0;
 
-    // TODO: define forwarding flags
-    logic mem_forwarding_flag_rs1;
-    logic mem_forwarding_flag_rs2;
-    logic wb_forwarding_flag_rs1;
-    logic wb_forwarding_flag_rs2;
+    // define forwarding flags
+    // condition: (writeback) and (dest_reg is requested for ALU)
+
+    logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.r.rs1 == ex_packet.dest_reg_idx);
+                                    
+    logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.r.rs2 == ex_packet.dest_reg_idx);
+
+    logic wb_forwarding_flag_rs1 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.r.rs1 == mem_packet.dest_reg_idx);
+
+    logic wb_forwarding_flag_rs2 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.r.rs2 == mem_packet.dest_reg_idx);
 
     // default values for rs1 and rs2
     logic rs1_mux_value = id_packet.rs1_value;
@@ -75,10 +84,10 @@ module pipeline (
             data_forwarding_stall = 1'b1;
             rs1_mux_value = 
         end else begin
-            if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result;
-            if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+            else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
             if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
-            if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+            else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
         end
     end
 
