@@ -71,7 +71,7 @@ module pipeline (
     logic rs2_mux_value = id_packet.rs2_value;
 
     always_comb begin
-        if (... == `RV32_LW) begin // TODO: get the inst in the ex stage?
+        if (id_packet.inst == `RV32_LW) begin // TODO: get the inst in the ex stage? Is id_packet.inst right?
             data_forwarding_stall = 1'b1;
             rs1_mux_value = 
         end else begin
