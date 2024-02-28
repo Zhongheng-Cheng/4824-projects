@@ -58,37 +58,42 @@ module pipeline (
 
     // TODO: stall if inst is LW
     logic data_forwarding_stall;
-    assign data_forwarding_stall = 1'b0;
 
     // define forwarding flags
     // condition: (writeback) and (dest_reg is requested for ALU)
 
     logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.r.rs1 == ex_packet.dest_reg_idx);
+                                    (id_packet.inst.r.rs1 == ex_packet.dest_reg_idx);
                                     
     logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.r.rs2 == ex_packet.dest_reg_idx);
+                                    (id_packet.inst.r.rs2 == ex_packet.dest_reg_idx);
 
     logic wb_forwarding_flag_rs1 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.r.rs1 == mem_packet.dest_reg_idx);
+                                    (id_packet.inst.r.rs1 == mem_packet.dest_reg_idx);
 
     logic wb_forwarding_flag_rs2 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.r.rs2 == mem_packet.dest_reg_idx);
+                                    (id_packet.inst.r.rs2 == mem_packet.dest_reg_idx);
 
     // default values for rs1 and rs2
-    logic rs1_mux_value = id_packet.rs1_value;
-    logic rs2_mux_value = id_packet.rs2_value;
+    logic rs1_mux_value;
+    logic rs2_mux_value;
 
     always_comb begin
-        if (id_packet.inst == `RV32_LW) begin // TODO: get the inst in the ex stage? Is id_packet.inst right?
+        rs1_mux_value = id_packet.rs1_value;
+        rs2_mux_value = id_packet.rs2_value;
+        data_forwarding_stall = 1'b0;
+        if (id_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
             data_forwarding_stall = 1'b1;
-            rs1_mux_value = 
         end else begin
             if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
             else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
             if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
             else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
         end
+        // if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+        // else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
+        // if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
+        // else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
     end
 
     //////////////////////////////////////////////////
@@ -105,7 +110,7 @@ module pipeline (
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
-    ID_EX_PACKET id_packet, id_ex_reg;
+    ID_EX_PACKET id_packet, id_ex_reg, id_packet_tmp;
 
     // Outputs from EX-Stage and EX/MEM Pipeline Register
     EX_MEM_PACKET ex_packet, ex_mem_reg;
@@ -184,7 +189,7 @@ module pipeline (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid       (next_if_valid),
+        .if_valid       (next_if_valid && ~data_forwarding_stall),
         .take_branch    (ex_mem_reg.take_branch),
         .branch_target  (ex_mem_reg.alu_result),
         .Imem2proc_data (mem2proc_data),
@@ -205,7 +210,7 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign if_id_enable = 1'b1; // always enabled
+    assign if_id_enable = ~data_forwarding_stall;
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -251,6 +256,7 @@ module pipeline (
     assign id_ex_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
+        // if (reset || data_forwarding_stall) begin
         if (reset) begin
             id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
@@ -272,9 +278,10 @@ module pipeline (
                 1'b0  // valid
             };
         end else if (id_ex_enable) begin
-            id_packet.rs1_value <= rs1_mux_value;
-            id_packet.rs2_value <= rs2_mux_value;
-            id_ex_reg <= id_packet;
+            id_packet_tmp <= id_packet;
+            id_packet_tmp.rs1_value <= rs1_mux_value;
+            id_packet_tmp.rs2_value <= rs2_mux_value;
+            id_ex_reg <= id_packet_tmp;
         end
     end
 
