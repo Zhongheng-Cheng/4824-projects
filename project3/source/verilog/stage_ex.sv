@@ -108,6 +108,7 @@ module stage_ex (
     assign ex_packet.illegal      = id_ex_reg.illegal;
     assign ex_packet.csr_op       = id_ex_reg.csr_op;
     assign ex_packet.valid        = id_ex_reg.valid;
+    assign ex_packet.inst         = id_ex_reg.inst;
 
     // Break out the signed/unsigned bit and memory read/write size
     assign ex_packet.rd_unsigned  = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed

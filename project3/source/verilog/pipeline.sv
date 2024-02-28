@@ -9,6 +9,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 `include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
 
 module pipeline (
     input        clock,             // System clock
@@ -82,13 +83,14 @@ module pipeline (
         rs1_mux_value = id_packet.rs1_value;
         rs2_mux_value = id_packet.rs2_value;
         data_forwarding_stall = 1'b0;
-        if (id_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
+        if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
             data_forwarding_stall = 1'b1;
         end else begin
-            if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-            else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
-            if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
-            else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+            data_forwarding_stall = 1'b0;
+            if (mem_forwarding_flag_rs1)        rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+            else if (wb_forwarding_flag_rs1)    rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
+            else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
         end
         // if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
         // else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
