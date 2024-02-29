@@ -63,17 +63,23 @@ module pipeline (
     // define forwarding flags
     // condition: (writeback) and (dest_reg is requested for ALU)
 
-    logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.inst.r.rs1 == ex_packet.dest_reg_idx);
+    // logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) & 
+    //                                 (id_packet.inst.r.rs1 === ex_packet.dest_reg_idx);
+
+    logic mem_forwarding_flag_rs1 = 0;
                                     
-    logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.inst.r.rs2 == ex_packet.dest_reg_idx);
+    // logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) & 
+    //                                 (id_packet.inst.r.rs2 === ex_packet.dest_reg_idx);
 
-    logic wb_forwarding_flag_rs1 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.inst.r.rs1 == mem_packet.dest_reg_idx);
+    logic mem_forwarding_flag_rs2 = 0;
 
-    logic wb_forwarding_flag_rs2 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
-                                    (id_packet.inst.r.rs2 == mem_packet.dest_reg_idx);
+    logic wb_forwarding_flag_rs1;
+    assign wb_forwarding_flag_rs1 = (ex_mem_reg.dest_reg_idx !== `ZERO_REG) &&
+                                    (if_id_reg.inst.r.rs1 == ex_mem_reg.dest_reg_idx);
+
+    logic wb_forwarding_flag_rs2;
+    assign wb_forwarding_flag_rs2 = (ex_mem_reg.dest_reg_idx !== `ZERO_REG) &&
+                                    (if_id_reg.inst.r.rs2 == ex_mem_reg.dest_reg_idx);
 
     // default values for rs1 and rs2
     logic [`XLEN-1:0] rs1_mux_value;
@@ -82,7 +88,7 @@ module pipeline (
     always_comb begin
         rs1_mux_value = id_packet.rs1_value;
         rs2_mux_value = id_packet.rs2_value;
-        // data_hazard_stall = 1'b0;
+        data_hazard_stall = 1'b0;
         // if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
         //     data_hazard_stall = 1'b1;
         // end else begin
@@ -92,10 +98,11 @@ module pipeline (
         //     if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
         //     else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
         // end
-        // if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-        // else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
-        // if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
-        // else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+        // rs1_mux_value = mem_packet.result;
+        if (mem_forwarding_flag_rs1)            rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+        else if (wb_forwarding_flag_rs1)        rs1_mux_value = mem_packet.result;
+        if (mem_forwarding_flag_rs2)            rs2_mux_value = ex_packet.alu_result;
+        else if (wb_forwarding_flag_rs2)        rs2_mux_value = mem_packet.result;
     end
 
     //////////////////////////////////////////////////
@@ -175,9 +182,9 @@ module pipeline (
             next_if_valid <= 1;
         end else begin
             // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= mem_wb_reg.valid; // no pipelining
+            // next_if_valid <= mem_wb_reg.valid; // no pipelining
             // next_if_valid <= 1; // full pipelining
-            // next_if_valid <= (id_ex_reg.rd_mem || id_ex_reg.wr_mem) ? 1'b0 : 1'b1; // preventing structural hazard: no simultaneous memory access between IF and MEM
+            next_if_valid <= (id_ex_reg.rd_mem || id_ex_reg.wr_mem) ? 1'b0 : 1'b1; // preventing structural hazard: no simultaneous memory access between IF and MEM
             take_branch <= ex_packet.take_branch;
         end
     end
