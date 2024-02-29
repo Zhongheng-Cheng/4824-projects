@@ -66,12 +66,13 @@ module pipeline (
     // logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) & 
     //                                 (id_packet.inst.r.rs1 === ex_packet.dest_reg_idx);
 
-    logic mem_forwarding_flag_rs1 = 0;
-                                    
-    // logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) & 
-    //                                 (id_packet.inst.r.rs2 === ex_packet.dest_reg_idx);
+    logic mem_forwarding_flag_rs1;
+    assign mem_forwarding_flag_rs1 = (id_ex_reg.dest_reg_idx !== `ZERO_REG) &&
+                                    (if_id_reg.inst.r.rs1 == id_ex_reg.dest_reg_idx);                           
 
-    logic mem_forwarding_flag_rs2 = 0;
+    logic mem_forwarding_flag_rs2;
+    assign mem_forwarding_flag_rs2 = (id_ex_reg.dest_reg_idx !== `ZERO_REG) &&
+                                    (if_id_reg.inst.r.rs2 == id_ex_reg.dest_reg_idx);
 
     logic wb_forwarding_flag_rs1;
     assign wb_forwarding_flag_rs1 = (ex_mem_reg.dest_reg_idx !== `ZERO_REG) &&
