@@ -182,7 +182,7 @@ module pipeline (
             next_if_valid <= ~(id_ex_reg.rd_mem || id_ex_reg.wr_mem) & // preventing structural hazard: no simultaneous memory access between IF and MEM
                             ~data_hazard_stall &
                             (if_id_reg.inst !=? `RV32_LW); 
-            take_branch <= ex_packet.take_branch;
+            take_branch <= ex_packet.take_branch & !ex_mem_reg.take_branch;
         end
     end
 
