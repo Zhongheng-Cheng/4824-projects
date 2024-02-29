@@ -191,7 +191,7 @@ module pipeline (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid       (next_if_valid && ~data_forwarding_stall),
+        .if_valid       (next_if_valid),
         .take_branch    (ex_mem_reg.take_branch),
         .branch_target  (ex_mem_reg.alu_result),
         .Imem2proc_data (mem2proc_data),
@@ -212,7 +212,7 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign if_id_enable = ~data_forwarding_stall;
+    assign if_id_enable = 1'b1;
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
