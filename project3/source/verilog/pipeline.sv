@@ -9,6 +9,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 `include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
 
 module pipeline (
     input        clock,             // System clock
@@ -52,6 +53,53 @@ module pipeline (
 
     //////////////////////////////////////////////////
     //                                              //
+    //               Data Forwarding                //
+    //                                              //
+    //////////////////////////////////////////////////
+
+    // TODO: stall if inst is LW
+    logic data_hazard_stall;
+
+    // define forwarding flags
+    // condition: (writeback) and (dest_reg is requested for ALU)
+
+    logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.inst.r.rs1 == ex_packet.dest_reg_idx);
+                                    
+    logic mem_forwarding_flag_rs2 = (ex_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.inst.r.rs2 == ex_packet.dest_reg_idx);
+
+    logic wb_forwarding_flag_rs1 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.inst.r.rs1 == mem_packet.dest_reg_idx);
+
+    logic wb_forwarding_flag_rs2 = (mem_packet.dest_reg_idx != `ZERO_REG) && 
+                                    (id_packet.inst.r.rs2 == mem_packet.dest_reg_idx);
+
+    // default values for rs1 and rs2
+    logic rs1_mux_value;
+    logic rs2_mux_value;
+
+    always_comb begin
+        rs1_mux_value = id_packet.rs1_value;
+        rs2_mux_value = id_packet.rs2_value;
+        data_hazard_stall = 1'b0;
+        if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
+            data_hazard_stall = 1'b1;
+        end else begin
+            data_hazard_stall = 1'b0;
+            if (mem_forwarding_flag_rs1)        rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+            else if (wb_forwarding_flag_rs1)    rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
+            else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
+        end
+        // if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+        // else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
+        // if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
+        // else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+    end
+
+    //////////////////////////////////////////////////
+    //                                              //
     //                Pipeline Wires                //
     //                                              //
     //////////////////////////////////////////////////
@@ -64,7 +112,7 @@ module pipeline (
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
-    ID_EX_PACKET id_packet, id_ex_reg;
+    ID_EX_PACKET id_packet, id_ex_reg, id_packet_tmp;
 
     // Outputs from EX-Stage and EX/MEM Pipeline Register
     EX_MEM_PACKET ex_packet, ex_mem_reg;
@@ -165,7 +213,7 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign if_id_enable = 1'b1; // always enabled
+    assign if_id_enable = 1'b1;
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset || take_branch) begin
@@ -211,6 +259,7 @@ module pipeline (
     assign id_ex_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
+        // if (reset || data_hazard_stall) begin
         if (reset || take_branch) begin
             id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
@@ -232,7 +281,30 @@ module pipeline (
                 1'b0  // valid
             };
         end else if (id_ex_enable) begin
-            id_ex_reg <= id_packet;
+            // id_ex_reg <= id_packet;
+
+            id_ex_reg.inst          <= id_packet.inst;
+            id_ex_reg.PC            <= id_packet.PC;
+            id_ex_reg.NPC           <= id_packet.NPC;
+
+            id_ex_reg.rs1_value     <= rs1_mux_value;
+            id_ex_reg.rs2_value     <= rs2_mux_value;
+
+            id_ex_reg.opa_select    <= id_packet.opa_select;
+            id_ex_reg.opb_select    <= id_packet.opb_select;
+
+            id_ex_reg.dest_reg_idx  <= id_packet.dest_reg_idx;
+            id_ex_reg.alu_func      <= id_packet.alu_func;
+            id_ex_reg.rd_mem        <= id_packet.rd_mem;
+            id_ex_reg.wr_mem        <= id_packet.wr_mem;
+            id_ex_reg.cond_branch   <= id_packet.cond_branch;
+            id_ex_reg.uncond_branch <= id_packet.uncond_branch;
+            id_ex_reg.halt          <= id_packet.halt;
+            id_ex_reg.illegal       <= id_packet.illegal;
+            id_ex_reg.csr_op        <= id_packet.csr_op;
+
+            id_ex_reg.valid         <= id_packet.valid;
+            
         end
     end
 

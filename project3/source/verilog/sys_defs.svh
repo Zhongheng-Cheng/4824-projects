@@ -282,6 +282,7 @@ typedef struct packed {
  * Data exchanged from the EX to the MEM stage
  */
 typedef struct packed {
+    INST              inst;
     logic [`XLEN-1:0] alu_result;
     logic [`XLEN-1:0] NPC;
 
