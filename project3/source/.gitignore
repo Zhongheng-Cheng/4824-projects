@@ -41,6 +41,9 @@ verdi*
 novas*
 *fsdb*
 
+# vtuber
+.nfs*
+
 # per-run output files
 *.out
 *.wb
