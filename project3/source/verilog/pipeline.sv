@@ -87,7 +87,7 @@ module pipeline (
         rs1_mux_value = id_packet.rs1_value;
         rs2_mux_value = id_packet.rs2_value;
         data_hazard_stall = 1'b0;
-        if (id_ex_reg.inst ==? `RV32_LW) begin // if inst == LW: stall for one clock period
+        if ((id_ex_reg.inst ==? `RV32_Itype(`RV32_LOAD, 3'b???))) begin // if inst == LW: stall for one clock period
             data_hazard_stall = 1'b1;
         end else begin
             data_hazard_stall = 1'b0;
@@ -179,7 +179,7 @@ module pipeline (
             // next_if_valid <= mem_wb_reg.valid; // no pipelining
             // next_if_valid <= 1; // full pipelining
             next_if_valid <= ~(id_ex_reg.rd_mem || id_ex_reg.wr_mem) & // preventing structural hazard: no simultaneous memory access between IF and MEM
-                            ~data_hazard_stall & (if_id_reg.inst !=? `RV32_LW); // preventing data hazard
+                            ~data_hazard_stall & (if_id_reg.inst !=? `RV32_Itype(`RV32_LOAD, 3'b???)); // preventing data hazard
             take_branch <= ex_packet.take_branch & !ex_mem_reg.take_branch;
         end
     end
