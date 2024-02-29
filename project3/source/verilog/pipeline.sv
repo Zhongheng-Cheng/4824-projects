@@ -58,7 +58,7 @@ module pipeline (
     //////////////////////////////////////////////////
 
     // TODO: stall if inst is LW
-    logic data_forwarding_stall;
+    logic data_hazard_stall;
 
     // define forwarding flags
     // condition: (writeback) and (dest_reg is requested for ALU)
@@ -82,20 +82,20 @@ module pipeline (
     always_comb begin
         rs1_mux_value = id_packet.rs1_value;
         rs2_mux_value = id_packet.rs2_value;
-        data_forwarding_stall = 1'b0;
-        // if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
-        //     data_forwarding_stall = 1'b1;
-        // end else begin
-        //     data_forwarding_stall = 1'b0;
-        //     if (mem_forwarding_flag_rs1)        rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-        //     else if (wb_forwarding_flag_rs1)    rs1_mux_value = mem_packet.result;
-        //     if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
-        //     else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
-        // end
-        if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-        else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
-        if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
-        else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
+        data_hazard_stall = 1'b0;
+        if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
+            data_hazard_stall = 1'b1;
+        end else begin
+            data_hazard_stall = 1'b0;
+            if (mem_forwarding_flag_rs1)        rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+            else if (wb_forwarding_flag_rs1)    rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
+            else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
+        end
+        // if (mem_forwarding_flag_rs1) rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+        // else if (wb_forwarding_flag_rs1) rs1_mux_value = mem_packet.result;
+        // if (mem_forwarding_flag_rs2) rs2_mux_value = ex_packet.alu_result;
+        // else if (wb_forwarding_flag_rs2) rs2_mux_value = mem_packet.result;
     end
 
     //////////////////////////////////////////////////
@@ -258,7 +258,7 @@ module pipeline (
     assign id_ex_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
-        // if (reset || data_forwarding_stall) begin
+        // if (reset || data_hazard_stall) begin
         if (reset) begin
             id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
