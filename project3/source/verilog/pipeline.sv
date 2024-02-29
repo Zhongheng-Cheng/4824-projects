@@ -62,10 +62,6 @@ module pipeline (
 
     // define forwarding flags
     // condition: (writeback) and (dest_reg is requested for ALU)
-
-    // logic mem_forwarding_flag_rs1 = (ex_packet.dest_reg_idx != `ZERO_REG) & 
-    //                                 (id_packet.inst.r.rs1 === ex_packet.dest_reg_idx);
-
     logic mem_forwarding_flag_rs1;
     assign mem_forwarding_flag_rs1 = (id_ex_reg.dest_reg_idx !== `ZERO_REG) &&
                                     (if_id_reg.inst.r.rs1 == id_ex_reg.dest_reg_idx);                           
@@ -90,20 +86,18 @@ module pipeline (
         rs1_mux_value = id_packet.rs1_value;
         rs2_mux_value = id_packet.rs2_value;
         data_hazard_stall = 1'b0;
-        // if (ex_packet.inst == `RV32_LW) begin // if inst == LW: stall for one clock period
-        //     data_hazard_stall = 1'b1;
-        // end else begin
-        //     data_hazard_stall = 1'b0;
-        //     if (mem_forwarding_flag_rs1)        rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-        //     else if (wb_forwarding_flag_rs1)    rs1_mux_value = mem_packet.result;
-        //     if (mem_forwarding_flag_rs2)        rs2_mux_value = ex_packet.alu_result;
-        //     else if (wb_forwarding_flag_rs2)    rs2_mux_value = mem_packet.result;
-        // end
-        // rs1_mux_value = mem_packet.result;
-        if (mem_forwarding_flag_rs1)            rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
-        else if (wb_forwarding_flag_rs1)        rs1_mux_value = mem_packet.result;
-        if (mem_forwarding_flag_rs2)            rs2_mux_value = ex_packet.alu_result;
-        else if (wb_forwarding_flag_rs2)        rs2_mux_value = mem_packet.result;
+        $display("id_packet.inst: %b, compare: %b", id_ex_reg.inst.r.funct3, (id_ex_reg.inst ==? `RV32_LW));
+        if (id_ex_reg.inst ==? `RV32_LW) begin // if inst == LW: stall for one clock period
+            // $display("+++++");
+            data_hazard_stall = 1'b1;
+        end else begin
+            data_hazard_stall = 1'b0;
+            if (mem_forwarding_flag_rs1)            rs1_mux_value = ex_packet.alu_result; // if both forwarding flags are true, select mem forwarding
+            else if (wb_forwarding_flag_rs1)        rs1_mux_value = mem_packet.result;
+            if (mem_forwarding_flag_rs2)            rs2_mux_value = ex_packet.alu_result;
+            else if (wb_forwarding_flag_rs2)        rs2_mux_value = mem_packet.result;
+        end
+        
     end
 
     //////////////////////////////////////////////////
@@ -120,7 +114,7 @@ module pipeline (
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
-    ID_EX_PACKET id_packet, id_ex_reg, id_packet_tmp;
+    ID_EX_PACKET id_packet, id_ex_reg;
 
     // Outputs from EX-Stage and EX/MEM Pipeline Register
     EX_MEM_PACKET ex_packet, ex_mem_reg;
@@ -185,7 +179,9 @@ module pipeline (
             // valid bit will cycle through the pipeline and come back from the wb stage
             // next_if_valid <= mem_wb_reg.valid; // no pipelining
             // next_if_valid <= 1; // full pipelining
-            next_if_valid <= (id_ex_reg.rd_mem || id_ex_reg.wr_mem) ? 1'b0 : 1'b1; // preventing structural hazard: no simultaneous memory access between IF and MEM
+            next_if_valid <= ~(id_ex_reg.rd_mem || id_ex_reg.wr_mem) & // preventing structural hazard: no simultaneous memory access between IF and MEM
+                            ~data_hazard_stall &
+                            (if_id_reg.inst !=? `RV32_LW); 
             take_branch <= ex_packet.take_branch;
         end
     end
@@ -221,7 +217,7 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign if_id_enable = 1'b1;
+    assign if_id_enable = ~data_hazard_stall;
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset || take_branch) begin
@@ -264,11 +260,11 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign id_ex_enable = 1'b1; // always enabled
+    assign id_ex_enable = 1'b1;
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         // if (reset || data_hazard_stall) begin
-        if (reset || take_branch) begin
+        if (reset || take_branch || data_hazard_stall) begin
             id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
                 {`XLEN{1'b0}}, // PC
